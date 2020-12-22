@@ -199,6 +199,9 @@ Module MessagingLib
         Return Request("/storage/v1/files", "POST", JsonConvert.SerializeObject(img, Formatting.None, JsonSettings))
     End Function
 
+    Function GetBalance()
+        Return Request("/cash/v1/balance", "GET")
+    End Function
 
     Sub GetGroupList()
 

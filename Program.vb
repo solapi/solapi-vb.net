@@ -21,12 +21,15 @@
             Case "chingutalk"
                 SendChingutalk.Run()
                 Return
+            Case "balance"
+                GetBalance.Run()
+                Return
         End Select
         PrintHelp()
     End Sub
 
     Sub PrintHelp()
-        Console.WriteLine("Nurigo [sms, lms, mms, alimtalk, chingutalk] 형식으로 실행하세요(소문자 주의)")
+        Console.WriteLine("Nurigo [sms, lms, mms, alimtalk, chingutalk, balance] 형식으로 실행하세요(소문자 주의)")
     End Sub
 End Module
 

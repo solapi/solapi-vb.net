@@ -12,10 +12,11 @@ SendLMS.vb          LMS 발송 예제
 SendMMS.vb          MMS 발송 예제
 SendAlimtalk.vb     알림톡 발송 예제
 SendChingutalk.vb   친구톡 발송 예제
+GetBalance.vb       잔액 조회 예제
 ```
 
 ## 예제 실행 방법
 아래 형식으로 실행하며 소문자에 주의해 주세요.
 ```
-Messaging.exe [sms, lms, mms, alimtalk, chingutalk]
+Messaging.exe [sms, lms, mms, alimtalk, chingutalk, balance]
 ```
