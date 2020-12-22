@@ -9,7 +9,7 @@ Module SendGroupMessage
         'Dim imageId As String = imgResp.Data.SelectToken("fileId").ToString()
         'Console.WriteLine("Image ID:" & imageId)
 
-        Dim group As TextingLib.Group = New TextingLib.Group()
+        Dim group As MessagingLib.Group = New MessagingLib.Group()
         Console.WriteLine(group.Create())
     End Sub
 End Module

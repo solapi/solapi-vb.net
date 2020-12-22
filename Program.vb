@@ -1,26 +1,32 @@
 ﻿Module Program
 
     Sub Main(args As String())
-        ReDim args(1)
-        args(0) = "group"
         If args.Length <= 0 Then
-            Console.WriteLine("sms: SMS 예제 실행, lms: LMS 예제 실행, ...")
+            PrintHelp()
             Return
         End If
         Select Case args(0)
             Case "sms"
                 SendSMS.Run()
+                Return
             Case "lms"
                 SendLMS.Run()
+                Return
             Case "mms"
                 SendMMS.Run()
+                Return
             Case "alimtalk"
                 SendAlimtalk.Run()
+                Return
             Case "chingutalk"
                 SendChingutalk.Run()
-            Case "group"
-                SendGroupMessage.Run()
+                Return
         End Select
+        PrintHelp()
+    End Sub
+
+    Sub PrintHelp()
+        Console.WriteLine("Nurigo [sms, lms, mms, alimtalk, chingutalk] 형식으로 실행하세요(소문자 주의)")
     End Sub
 End Module
 

@@ -1,7 +1,7 @@
 ﻿Imports System
 Imports Newtonsoft.Json
 Imports Newtonsoft.Json.Linq
-Module TextingLib
+Module MessagingLib
     Class Message
         Public type As String
         Public [to] As String
@@ -205,58 +205,4 @@ Module TextingLib
         Request("/messages/v4/groups", "GET")
 
     End Sub
-
-    Public Function GetOSVersion() As String
-        Select Case Environment.OSVersion.Platform
-            Case PlatformID.Win32S
-                Return "Win 3.1"
-            Case PlatformID.Win32Windows
-                Select Case Environment.OSVersion.Version.Minor
-                    Case 0
-                        Return "Win95"
-                    Case 10
-                        Return "Win98"
-                    Case 90
-                        Return "WinME"
-                    Case Else
-                        Return "Unknown"
-                End Select
-            Case PlatformID.Win32NT
-                Select Case Environment.OSVersion.Version.Major
-                    Case 3
-                        Return "NT 3.51"
-                    Case 4
-                        Return "NT 4.0"
-                    Case 5
-                        Select Case _
-                            Environment.OSVersion.Version.Minor
-                            Case 0
-                                Return "Win2000"
-                            Case 1
-                                Return "WinXP"
-                            Case 2
-                                Return "Win2003"
-                        End Select
-                    Case 6
-                        Select Case _
-                            Environment.OSVersion.Version.Minor
-                            Case 0
-                                Return "Vista/Win2008Server"
-                            Case 1
-                                Return "Win7/Win2008Server R2"
-                            Case 2
-                                Return "Win8/Win2012Server"
-                            Case 3
-                                Return "Win8.1/Win2012Server R2"
-                        End Select
-                    Case 10 ' this will only show up If the application has a manifest file allowing W10, otherwise a 6.2 version will be used
-                        Return "Windows 10"
-                    Case Else
-                        Return "Unknown"
-                End Select
-            Case PlatformID.WinCE
-                Return "Win CE"
-        End Select
-        Return "Unknown"
-    End Function
 End Module
