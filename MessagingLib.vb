@@ -69,8 +69,18 @@ Module MessagingLib
         Return hash.ToLower
     End Function
 
+    Function GetSalt(ByVal Optional len As Integer = 32)
+        Dim s As String = "ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789"
+        Dim r As New Random
+        Dim sb As New Text.StringBuilder
+        For i As Integer = 1 To len
+            Dim idx As Integer = r.Next(0, 35)
+            sb.Append(s.Substring(idx, 1))
+        Next
+        Return sb.ToString()
+    End Function
     Function GetAuth(apiKey As String, apiSecret As String)
-        Dim salt As String = "abcdefghijklmn01234"
+        Dim salt As String = GetSalt()
         Dim dateStr As String = DateTime.UtcNow.ToString("yyyy-MM-ddTHH:mm:ssZ")
         Dim data As String = dateStr & salt
 
@@ -92,7 +102,6 @@ Module MessagingLib
 
             If Not String.IsNullOrEmpty(data) Then
                 Using writer = New IO.StreamWriter(req.GetRequestStream())
-                    Console.WriteLine(data)
                     writer.Write(data)
                     writer.Close()
                 End Using
@@ -102,7 +111,6 @@ Module MessagingLib
                 Using streamReader As IO.StreamReader = New System.IO.StreamReader(response.GetResponseStream())
                     Dim jsonResponseText = streamReader.ReadToEnd()
                     Dim jsonObj As JObject = JObject.Parse(jsonResponseText)
-                    ' Console.WriteLine(jsonObj.SelectToken("groupList").ToString)
                     Return New Response() With {
                         .StatusCode = Net.HttpStatusCode.OK,
                         .Data = jsonObj,
@@ -112,10 +120,8 @@ Module MessagingLib
                 End Using
             End Using
         Catch ex As Net.WebException
-            Console.WriteLine("WebException:" & ex.Message)
             Using streamReader As IO.StreamReader = New System.IO.StreamReader(ex.Response.GetResponseStream())
                 Dim jsonResponseText = streamReader.ReadToEnd()
-                Console.WriteLine(jsonResponseText)
                 Dim jsonObj As JObject = JObject.Parse(jsonResponseText)
                 Dim ErrorCode As String = jsonObj.SelectToken("errorCode")
                 Dim ErrorMessage As String = jsonObj.SelectToken("errorMessage")
@@ -128,7 +134,6 @@ Module MessagingLib
                     }
             End Using
         Catch ex As Exception
-            Console.WriteLine(ex.Message)
             Dim ErrorCode As String = "Unknown Exception"
             Dim ErrorMessage As String = ex.Message
 
@@ -176,8 +181,6 @@ Module MessagingLib
 
 
     Function SendMessages(messages As Messages)
-        Console.WriteLine("SendMessages")
-        ' Console.WriteLine(JsonConvert.SerializeObject(messages))
         Return Request("/messages/v4/send-many", "POST", JsonConvert.SerializeObject(messages, Formatting.None, JsonSettings))
     End Function
 
