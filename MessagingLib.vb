@@ -88,7 +88,7 @@ Module MessagingLib
     End Function
 
     Function GetUrl(path)
-        Return Config.protocol & "://" & Config.domain & path
+        Return Config.protocol & "://" & Config.domain & Config.prefix & path
     End Function
 
     Function Request(path As String, method As String, Optional data As String = vbNullString)
