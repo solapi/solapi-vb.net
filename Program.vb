@@ -1,5 +1,4 @@
 ﻿Module Program
-
     Sub Main(args As String())
         If args.Length <= 0 Then
             PrintHelp()
@@ -23,6 +22,9 @@
                 Return
             Case "balance"
                 GetBalance.Run()
+                Return
+            Case "scheduled"
+                SendScheduledMessages.Run()
                 Return
         End Select
         PrintHelp()

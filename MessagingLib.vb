@@ -1,7 +1,13 @@
 ﻿Imports System
 Imports Newtonsoft.Json
 Imports Newtonsoft.Json.Linq
+
 Module MessagingLib
+    Class DefaultAgent
+        Public osPlatform As String
+        Public sdkVersion As String
+    End Class
+
     Class Message
         Public type As String
         Public [to] As String
@@ -15,9 +21,32 @@ Module MessagingLib
     Class Messages
         Public messages As New List(Of Message)
 
+        Public agent As DefaultAgent = New DefaultAgent() With {
+            .osPlatform = Environment.OSVersion.VersionString,
+            .sdkVersion = "vb.net/1.0.1"
+            }
+
+        Public allowDuplicates As Boolean = false
+
         Sub Add(message As Message)
             messages.Add(message)
-            ' Console.WriteLine(JsonConvert.SerializeObject(messages))
+        End Sub
+    End Class
+
+    Class MessagesDetail
+        Public messages As New List(Of Message)
+
+        Public agent As DefaultAgent = New DefaultAgent() With {
+            .osPlatform = Environment.OSVersion.VersionString,
+            .sdkVersion = "vb.net/1.0.1"
+            }
+
+        Public allowDuplicates As Boolean = false
+
+        Public scheduledDate = Nothing
+
+        Sub Add(message As Message)
+            messages.Add(message)
         End Sub
     End Class
 
@@ -43,12 +72,14 @@ Module MessagingLib
         Public linkAnd As String
         Public linkIos As String
     End Class
+
     Class KakaoOptions
         Public pfId As String
         Public templateId As String
         Public disableSms As Boolean
         Public imageId As String
         Public buttons As KakaoButton()
+        Public variables As Dictionary(Of String, String)
     End Class
 
     Class Response
@@ -58,9 +89,9 @@ Module MessagingLib
         Public Data As JObject
     End Class
 
-    Dim JsonSettings As JsonSerializerSettings = New JsonSerializerSettings() With {
+    Dim _jsonSettings As JsonSerializerSettings = New JsonSerializerSettings() With {
         .NullValueHandling = NullValueHandling.Ignore
-    }
+        }
 
     Function GetSignature(apiKey As String, data As String, apiSecret As String)
         Dim sha256 As New Security.Cryptography.HMACSHA256(Text.Encoding.UTF8.GetBytes(apiSecret))
@@ -79,20 +110,23 @@ Module MessagingLib
         Next
         Return sb.ToString()
     End Function
+
     Function GetAuth(apiKey As String, apiSecret As String)
         Dim salt As String = GetSalt()
         Dim dateStr As String = DateTime.UtcNow.ToString("yyyy-MM-ddTHH:mm:ssZ")
         Dim data As String = dateStr & salt
 
-        Return "HMAC-SHA256 apiKey=" & apiKey & ", date=" & dateStr & ", salt=" & salt & ", signature=" & GetSignature(apiKey, data, apiSecret)
+        Return _
+            "HMAC-SHA256 apiKey=" & apiKey & ", date=" & dateStr & ", salt=" & salt & ", signature=" &
+            GetSignature(apiKey, data, apiSecret)
     End Function
 
     Function GetUrl(path)
-        Return Config.protocol & "://" & Config.domain & Config.prefix & path
+        Return protocol & "://" & domain & prefix & path
     End Function
 
     Function Request(path As String, method As String, Optional data As String = vbNullString)
-        Dim auth As String = GetAuth(Config.apiKey, Config.apiSecret)
+        Dim auth As String = GetAuth(apiKey, apiSecret)
 
         Try
             Dim req As Net.WebRequest = Net.WebRequest.Create(GetUrl(path))
@@ -108,7 +142,7 @@ Module MessagingLib
             End If
 
             Using response As Net.WebResponse = req.GetResponse()
-                Using streamReader As IO.StreamReader = New System.IO.StreamReader(response.GetResponseStream())
+                Using streamReader = New IO.StreamReader(response.GetResponseStream())
                     Dim jsonResponseText = streamReader.ReadToEnd()
                     Dim jsonObj As JObject = JObject.Parse(jsonResponseText)
                     Return New Response() With {
@@ -116,35 +150,34 @@ Module MessagingLib
                         .Data = jsonObj,
                         .ErrorCode = vbNull,
                         .ErrorMessage = vbNull
-                    }
+                        }
                 End Using
             End Using
         Catch ex As Net.WebException
-            Using streamReader As IO.StreamReader = New System.IO.StreamReader(ex.Response.GetResponseStream())
+            Using streamReader = New IO.StreamReader(ex.Response.GetResponseStream())
                 Dim jsonResponseText = streamReader.ReadToEnd()
                 Dim jsonObj As JObject = JObject.Parse(jsonResponseText)
                 Dim ErrorCode As String = jsonObj.SelectToken("errorCode")
                 Dim ErrorMessage As String = jsonObj.SelectToken("errorMessage")
-                Dim httpResp As Net.HttpWebResponse = DirectCast(ex.Response, Net.HttpWebResponse)
+                Dim httpResp = DirectCast(ex.Response, Net.HttpWebResponse)
                 Return New Response() With {
-                        .StatusCode = httpResp.StatusCode,
-                        .Data = jsonObj,
-                        .ErrorCode = ErrorCode,
-                        .ErrorMessage = ErrorMessage
+                    .StatusCode = httpResp.StatusCode,
+                    .Data = jsonObj,
+                    .ErrorCode = ErrorCode,
+                    .ErrorMessage = ErrorMessage
                     }
             End Using
         Catch ex As Exception
-            Dim ErrorCode As String = "Unknown Exception"
+            Dim ErrorCode = "Unknown Exception"
             Dim ErrorMessage As String = ex.Message
 
             Return New Response() With {
-                        .StatusCode = vbNull,
-                        .Data = vbNull,
-                        .ErrorCode = ErrorCode,
-                        .ErrorMessage = ErrorMessage
-                    }
+                .StatusCode = vbNull,
+                .Data = jObject.Parse("{}"),
+                .ErrorCode = ErrorCode,
+                .ErrorMessage = ErrorMessage
+                }
         End Try
-
     End Function
 
     Class Group
@@ -163,15 +196,17 @@ Module MessagingLib
             If String.IsNullOrEmpty(groupId) Then
                 Throw New System.Exception("그룹아이디가 설정되지 않았습니다.")
             End If
-            Return Request("/messages/v4/groups/" & groupId & "/messages", "POST", JsonConvert.SerializeObject(msgs, Formatting.None, JsonSettings))
+            Return Request("/messages/v4/groups/" & groupId & "/messages", "POST",
+                           JsonConvert.SerializeObject(msgs, Formatting.None, _jsonSettings))
         End Function
 
         Function Create()
             Dim groupInfo As GroupInfo = New GroupInfo() With {
-                .osPlatform = Environment.OSVersion.VersionString,
-                .sdkVersion = "VB.NET v1"
-            }
-            Return Request("/messages/v4/groups", "POST", JsonConvert.SerializeObject(groupInfo, Formatting.None, JsonSettings))
+                    .osPlatform = Environment.OSVersion.VersionString,
+                    .sdkVersion = "vb.net/1.0.1"
+                    }
+            Return Request("/messages/v4/groups", "POST",
+                           JsonConvert.SerializeObject(groupInfo, Formatting.None, _jsonSettings))
         End Function
 
         Function GetList()
@@ -179,9 +214,15 @@ Module MessagingLib
         End Function
     End Class
 
+    Function SendMessagesDetail(messages As MessagesDetail)
+        Return Request("/messages/v4/send-many/detail", "POST",
+                       JsonConvert.SerializeObject(messages, Formatting.None, _jsonSettings))
+    End Function
+
 
     Function SendMessages(messages As Messages)
-        Return Request("/messages/v4/send-many", "POST", JsonConvert.SerializeObject(messages, Formatting.None, JsonSettings))
+        Return Request("/messages/v4/send-many", "POST",
+                       JsonConvert.SerializeObject(messages, Formatting.None, _jsonSettings))
     End Function
 
     Function UploadImage(path As String)
@@ -189,7 +230,7 @@ Module MessagingLib
         Dim img As Image = New Image()
         img.type = "MMS"
         img.file = Convert.ToBase64String(bytes)
-        Return Request("/storage/v1/files", "POST", JsonConvert.SerializeObject(img, Formatting.None, JsonSettings))
+        Return Request("/storage/v1/files", "POST", JsonConvert.SerializeObject(img, Formatting.None, _jsonSettings))
     End Function
 
     Function UploadKakaoImage(path As String, url As String)
@@ -199,7 +240,7 @@ Module MessagingLib
         img.file = Convert.ToBase64String(bytes)
         img.name = IO.Path.GetFileName(path)
         img.link = url
-        Return Request("/storage/v1/files", "POST", JsonConvert.SerializeObject(img, Formatting.None, JsonSettings))
+        Return Request("/storage/v1/files", "POST", JsonConvert.SerializeObject(img, Formatting.None, _jsonSettings))
     End Function
 
     Function GetBalance()
@@ -209,6 +250,5 @@ Module MessagingLib
     Sub GetGroupList()
 
         Request("/messages/v4/groups", "GET")
-
     End Sub
 End Module
